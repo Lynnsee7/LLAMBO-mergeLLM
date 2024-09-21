@@ -1,0 +1,62 @@
+{
+  "hyperparameters": [
+    {
+      "name": "alpha",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 1e-05,
+      "upper": 10.0,
+      "default": 0.8043116425855964,
+      "q": null
+    },
+    {
+      "name": "batch_size",
+      "type": "uniform_int",
+      "log": false,
+      "lower": 10,
+      "upper": 250,
+      "default": 72,
+      "q": null
+    },
+    {
+      "name": "hidden_layer_sizes",
+      "type": "uniform_int",
+      "log": false,
+      "lower": 50,
+      "upper": 200,
+      "default": 164,
+      "q": null
+    },
+    {
+      "name": "learning_rate_init",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 1e-05,
+      "upper": 0.1,
+      "default": 0.03734740413372437,
+      "q": null
+    },
+    {
+      "name": "momentum",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 0.001,
+      "upper": 0.999,
+      "default": 0.001153013936524833,
+      "q": null
+    },
+    {
+      "name": "power_t",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 0.1,
+      "upper": 0.9,
+      "default": 0.4847846230630253,
+      "q": null
+    }
+  ],
+  "conditions": [],
+  "forbiddens": [],
+  "python_module_version": "0.6.1",
+  "json_format_version": 0.4
+}

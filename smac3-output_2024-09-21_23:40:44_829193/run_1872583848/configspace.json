@@ -1,0 +1,62 @@
+{
+  "hyperparameters": [
+    {
+      "name": "max_depth",
+      "type": "uniform_int",
+      "log": false,
+      "lower": 1,
+      "upper": 15,
+      "default": 3,
+      "q": null
+    },
+    {
+      "name": "max_features",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 0.01,
+      "upper": 0.99,
+      "default": 0.15519793585483974,
+      "q": null
+    },
+    {
+      "name": "min_impurity_decrease",
+      "type": "uniform_float",
+      "log": false,
+      "lower": 0.0,
+      "upper": 0.5,
+      "default": 0.11300600030211794,
+      "q": null
+    },
+    {
+      "name": "min_samples_leaf",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 0.01,
+      "upper": 0.49,
+      "default": 0.015162093706799586,
+      "q": null
+    },
+    {
+      "name": "min_samples_split",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 0.01,
+      "upper": 0.99,
+      "default": 0.027520151502054023,
+      "q": null
+    },
+    {
+      "name": "min_weight_fraction_leaf",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 0.01,
+      "upper": 0.49,
+      "default": 0.0390188994403273,
+      "q": null
+    }
+  ],
+  "conditions": [],
+  "forbiddens": [],
+  "python_module_version": "0.6.1",
+  "json_format_version": 0.4
+}

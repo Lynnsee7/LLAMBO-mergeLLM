@@ -1,0 +1,6 @@
+"CPU Time Used","Estimated Training Performance","Wallclock Time","Incumbent ID","Automatic Configurator (CPU) Time","Configuration..."
+0.000000, 2147483648.000000, 0.000038, 1, 0.000038, alpha='5',batch_size='6',depth='1',learning_rate_init='5',width='8'
+0.050285, 0.043400, 0.051860, 1, 0.001575, alpha='5',batch_size='6',depth='1',learning_rate_init='5',width='8'
+0.153991, 0.039000, 0.159266, 2, 0.005275, alpha='0',batch_size='4',depth='1',learning_rate_init='3',width='6'
+0.557572, 0.035200, 2.839010, 3, 2.281439, alpha='0',batch_size='4',depth='2',learning_rate_init='3',width='3'
+1.164953, 0.034600, 8.223597, 4, 7.058644, alpha='1',batch_size='3',depth='2',learning_rate_init='3',width='3'

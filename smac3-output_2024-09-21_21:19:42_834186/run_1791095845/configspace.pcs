@@ -1,0 +1,5 @@
+alpha integer [0, 9] [7]
+batch_size integer [0, 9] [9]
+depth integer [0, 2] [1]
+learning_rate_init integer [0, 9] [6]
+width integer [0, 9] [8]

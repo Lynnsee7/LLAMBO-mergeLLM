@@ -1,0 +1,44 @@
+{
+  "hyperparameters": [
+    {
+      "name": "max_depth",
+      "type": "uniform_int",
+      "log": false,
+      "lower": 0,
+      "upper": 8,
+      "default": 7,
+      "q": null
+    },
+    {
+      "name": "max_features",
+      "type": "uniform_int",
+      "log": false,
+      "lower": 0,
+      "upper": 9,
+      "default": 4,
+      "q": null
+    },
+    {
+      "name": "min_samples_leaf",
+      "type": "uniform_int",
+      "log": false,
+      "lower": 0,
+      "upper": 9,
+      "default": 8,
+      "q": null
+    },
+    {
+      "name": "min_samples_split",
+      "type": "uniform_int",
+      "log": false,
+      "lower": 0,
+      "upper": 9,
+      "default": 1,
+      "q": null
+    }
+  ],
+  "conditions": [],
+  "forbiddens": [],
+  "python_module_version": "0.6.1",
+  "json_format_version": 0.4
+}

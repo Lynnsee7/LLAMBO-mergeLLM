@@ -1,0 +1,9 @@
+"CPU Time Used","Estimated Training Performance","Wallclock Time","Incumbent ID","Automatic Configurator (CPU) Time","Configuration..."
+0.000000, 2147483648.000000, 0.000036, 1, 0.000036, max_depth='4',max_features='6',min_samples_leaf='3',min_samples_split='5'
+0.017123, 0.126800, 0.018569, 1, 0.001446, max_depth='4',max_features='6',min_samples_leaf='3',min_samples_split='5'
+0.034053, 0.084900, 0.036844, 2, 0.002791, max_depth='7',max_features='8',min_samples_leaf='1',min_samples_split='2'
+0.135586, 0.082900, 1.430328, 3, 1.294742, max_depth='8',max_features='7',min_samples_leaf='1',min_samples_split='2'
+0.240267, 0.054600, 3.582777, 4, 3.342510, max_depth='8',max_features='7',min_samples_leaf='0',min_samples_split='1'
+0.274223, 0.054600, 4.114014, 5, 3.839791, max_depth='8',max_features='6',min_samples_leaf='0',min_samples_split='1'
+0.358461, 0.051700, 5.230170, 6, 4.871710, max_depth='8',max_features='3',min_samples_leaf='0',min_samples_split='1'
+0.375196, 0.050700, 5.249985, 7, 4.874789, max_depth='8',max_features='3',min_samples_leaf='0',min_samples_split='0'

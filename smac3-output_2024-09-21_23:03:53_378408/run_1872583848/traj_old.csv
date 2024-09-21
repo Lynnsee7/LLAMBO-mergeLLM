@@ -1,0 +1,7 @@
+"CPU Time Used","Estimated Training Performance","Wallclock Time","Incumbent ID","Automatic Configurator (CPU) Time","Configuration..."
+0.000000, 2147483648.000000, 0.000041, 1, 0.000041, alpha='3.883695706453229',batch_size='237',hidden_layer_sizes='78',learning_rate_init='0.000868953200496221',momentum='0.002905446742026661',power_t='0.2022411350919729'
+0.162856, 1.217700, 0.164668, 1, 0.001812, alpha='3.883695706453229',batch_size='237',hidden_layer_sizes='78',learning_rate_init='0.000868953200496221',momentum='0.002905446742026661',power_t='0.2022411350919729'
+0.235321, 1.140400, 0.238996, 2, 0.003676, alpha='5.244489926659613e-05',batch_size='126',hidden_layer_sizes='155',learning_rate_init='0.0033958689528894794',momentum='0.11188740474257428',power_t='0.6036521056579498'
+0.338314, 1.065000, 0.345222, 3, 0.006909, alpha='0.024807944140628875',batch_size='63',hidden_layer_sizes='124',learning_rate_init='0.01174802017475964',momentum='0.003187109691163522',power_t='0.3555428098245127'
+0.954924, 1.013100, 2.589438, 4, 1.634515, alpha='8.023688276362709',batch_size='35',hidden_layer_sizes='157',learning_rate_init='0.021083444330016108',momentum='0.10968113538881549',power_t='0.6016134219005101'
+2.720394, 1.010700, 9.815962, 5, 7.095568, alpha='8.742198064029967',batch_size='35',hidden_layer_sizes='157',learning_rate_init='0.02543801403984764',momentum='0.251122580241376',power_t='0.8004410323936612'

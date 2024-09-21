@@ -1,0 +1,35 @@
+{
+  "hyperparameters": [
+    {
+      "name": "C",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 1.0,
+      "upper": 1000.0,
+      "default": 2.533610417321417,
+      "q": null
+    },
+    {
+      "name": "gamma",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 0.0001,
+      "upper": 0.001,
+      "default": 0.0003262707349770297,
+      "q": null
+    },
+    {
+      "name": "tol",
+      "type": "uniform_float",
+      "log": true,
+      "lower": 1e-05,
+      "upper": 0.1,
+      "default": 5.467130776888183e-05,
+      "q": null
+    }
+  ],
+  "conditions": [],
+  "forbiddens": [],
+  "python_module_version": "0.6.1",
+  "json_format_version": 0.4
+}
