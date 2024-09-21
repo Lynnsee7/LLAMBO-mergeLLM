@@ -1,2 +1,0 @@
-{"cpu_time": 0.0, "wallclock_time": 5.030632019042969e-05, "evaluations": 0, "cost": 2147483648.0, "incumbent": {"alpha": 5, "batch_size": 6, "depth": 1, "learning_rate_init": 5, "width": 4}, "budget": 0, "origin": "Initial design"}
-{"cpu_time": 0.07051563262939453, "wallclock_time": 0.07234954833984375, "evaluations": 1, "cost": 0.0016, "incumbent": {"alpha": 5, "batch_size": 6, "depth": 1, "learning_rate_init": 5, "width": 4}, "budget": 0, "origin": "Initial design"}

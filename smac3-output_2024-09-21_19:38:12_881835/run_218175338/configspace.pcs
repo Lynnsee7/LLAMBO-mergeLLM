@@ -1,4 +1,0 @@
-max_depth integer [0, 8] [0]
-max_features integer [0, 9] [5]
-min_samples_leaf integer [0, 9] [2]
-min_samples_split integer [0, 9] [4]

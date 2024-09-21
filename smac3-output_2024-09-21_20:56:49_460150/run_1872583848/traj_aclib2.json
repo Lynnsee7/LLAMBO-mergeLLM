@@ -1,5 +1,0 @@
-{"cpu_time": 0.0, "wallclock_time": 3.6716461181640625e-05, "evaluations": 0, "cost": 2147483648.0, "incumbent": ["alpha='4'", "batch_size='0'", "depth='1'", "learning_rate_init='4'", "width='4'"], "origin": "Initial design"}
-{"cpu_time": 0.049596309661865234, "wallclock_time": 0.051039695739746094, "evaluations": 1, "cost": 0.0751, "incumbent": ["alpha='4'", "batch_size='0'", "depth='1'", "learning_rate_init='4'", "width='4'"], "origin": "Initial design"}
-{"cpu_time": 0.10062837600708008, "wallclock_time": 0.10349512100219727, "evaluations": 2, "cost": 0.0741, "incumbent": ["alpha='3'", "batch_size='2'", "depth='1'", "learning_rate_init='3'", "width='2'"], "origin": "Initial design"}
-{"cpu_time": 0.20267176628112793, "wallclock_time": 0.20896077156066895, "evaluations": 4, "cost": 0.0683, "incumbent": ["alpha='6'", "batch_size='5'", "depth='0'", "learning_rate_init='5'", "width='2'"], "origin": "Initial design"}
-{"cpu_time": 0.3040001392364502, "wallclock_time": 0.701824426651001, "evaluations": 6, "cost": 0.0624, "incumbent": ["alpha='6'", "batch_size='1'", "depth='0'", "learning_rate_init='5'", "width='2'"], "origin": "Random Search (sorted)"}

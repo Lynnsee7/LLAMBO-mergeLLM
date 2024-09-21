@@ -1,2 +1,0 @@
-learning_rate real [0.0001, 10.0] [1.7043335115909477]log
-n_estimators integer [10, 100] [94]

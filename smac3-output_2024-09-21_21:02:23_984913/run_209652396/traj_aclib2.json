@@ -1,4 +1,0 @@
-{"cpu_time": 0.0, "wallclock_time": 3.7670135498046875e-05, "evaluations": 0, "cost": 2147483648.0, "incumbent": ["max_depth='4'", "max_features='6'", "min_samples_leaf='5'", "min_samples_split='5'"], "origin": "Initial design"}
-{"cpu_time": 0.017186880111694336, "wallclock_time": 0.018437862396240234, "evaluations": 1, "cost": 0.0681, "incumbent": ["max_depth='4'", "max_features='6'", "min_samples_leaf='5'", "min_samples_split='5'"], "origin": "Initial design"}
-{"cpu_time": 0.06760954856872559, "wallclock_time": 0.07325053215026855, "evaluations": 4, "cost": 0.023, "incumbent": ["max_depth='5'", "max_features='8'", "min_samples_leaf='1'", "min_samples_split='1'"], "origin": "Initial design"}
-{"cpu_time": 0.10132694244384766, "wallclock_time": 0.47565412521362305, "evaluations": 6, "cost": 0.0148, "incumbent": ["max_depth='8'", "max_features='7'", "min_samples_leaf='0'", "min_samples_split='1'"], "origin": "Random Search (sorted)"}

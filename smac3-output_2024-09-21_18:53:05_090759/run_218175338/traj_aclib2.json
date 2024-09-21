@@ -1,5 +1,0 @@
-{"cpu_time": 0.0, "wallclock_time": 4.482269287109375e-05, "evaluations": 0, "cost": 2147483648.0, "incumbent": ["max_depth='4'", "max_features='6'", "min_samples_leaf='3'", "min_samples_split='5'"], "origin": "Initial design"}
-{"cpu_time": 0.020220518112182617, "wallclock_time": 0.021948575973510742, "evaluations": 1, "cost": 0.2135, "incumbent": ["max_depth='4'", "max_features='6'", "min_samples_leaf='3'", "min_samples_split='5'"], "origin": "Initial design"}
-{"cpu_time": 0.04030323028564453, "wallclock_time": 0.04370832443237305, "evaluations": 2, "cost": 0.1865, "incumbent": ["max_depth='7'", "max_features='8'", "min_samples_leaf='1'", "min_samples_split='2'"], "origin": "Initial design"}
-{"cpu_time": 0.45497655868530273, "wallclock_time": 8.307432651519775, "evaluations": 21, "cost": 0.1713, "incumbent": ["max_depth='7'", "max_features='8'", "min_samples_leaf='0'", "min_samples_split='2'"], "origin": "Local Search"}
-{"cpu_time": 0.49721503257751465, "wallclock_time": 9.048036336898804, "evaluations": 23, "cost": 0.1489, "incumbent": ["max_depth='8'", "max_features='7'", "min_samples_leaf='0'", "min_samples_split='0'"], "origin": "Random Search (sorted)"}

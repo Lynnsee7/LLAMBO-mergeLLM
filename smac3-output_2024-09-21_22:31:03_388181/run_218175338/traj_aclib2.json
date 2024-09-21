@@ -1,4 +1,0 @@
-{"cpu_time": 0.0, "wallclock_time": 3.743171691894531e-05, "evaluations": 0, "cost": 2147483648.0, "incumbent": ["learning_rate='1.5839636792271974'", "n_estimators='16'"], "origin": "Initial design"}
-{"cpu_time": 0.11870956420898438, "wallclock_time": 0.11989331245422363, "evaluations": 1, "cost": 0.7812, "incumbent": ["learning_rate='1.5839636792271974'", "n_estimators='16'"], "origin": "Initial design"}
-{"cpu_time": 2.451474905014038, "wallclock_time": 5.3552610874176025, "evaluations": 13, "cost": 0.778, "incumbent": ["learning_rate='1.5839636792271983'", "n_estimators='17'"], "origin": "Local Search"}
-{"cpu_time": 3.0782041549682617, "wallclock_time": 7.129028797149658, "evaluations": 17, "cost": 0.7456, "incumbent": ["learning_rate='1.5839636792271983'", "n_estimators='32'"], "origin": "Local Search"}

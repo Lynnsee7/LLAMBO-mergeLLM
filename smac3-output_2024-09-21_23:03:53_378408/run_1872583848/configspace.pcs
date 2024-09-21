@@ -1,6 +1,0 @@
-alpha real [1e-05, 10.0] [0.024807944140628875]log
-batch_size integer [10, 250] [63]
-hidden_layer_sizes integer [50, 200] [124]
-learning_rate_init real [1e-05, 0.1] [0.01174802017475964]log
-momentum real [0.001, 0.999] [0.003187109691163522]log
-power_t real [0.1, 0.9] [0.3555428098245127]log
