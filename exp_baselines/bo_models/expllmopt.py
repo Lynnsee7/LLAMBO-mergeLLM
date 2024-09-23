@@ -335,7 +335,6 @@ def get_init_configs(fun_to_evaluate, config_space, n_init, order_list, seed=0, 
     print("x0:",x0,"y0:",y0)
 
 
-    tol = 1e-8
 
     for idx in range(n_init):
         this_x = config_init[idx] 
