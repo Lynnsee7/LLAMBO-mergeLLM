@@ -227,7 +227,7 @@ class ExpLLMOptimizer:
         err = None
         dup = None
         
-        # 获取初始配置===============================================
+
         x0, y0 = get_init_configs(self.objective, self.search_spaces, n_init, order_list, seed, config_init)
         
 
@@ -264,7 +264,7 @@ class ExpLLMOptimizer:
         params_history, scores_history = [], []
         # ========================================================================
         # i=0
-        i = len(x0)  # 从初始点数量开始递增
+        i = len(x0)  
         
         err, dup = None, None
 
@@ -355,29 +355,29 @@ def clip_to_bounds(params, bounds):
             clipped_param = upper
             print(f"Parameter {i} ({param}) is above the upper bound ({upper}), clipping to {upper}")
         else:
-            clipped_param = param  # 保留原始值
+            clipped_param = param 
         clipped_params.append(clipped_param)
     return clipped_params
 
 
 def get_init_configs(fun_to_evaluate, config_space, n_init, order_list, seed=0, config_init=None):
-    # 检查 config_init 是否正确传入
+
     if config_init is None or not isinstance(config_init, list):
         raise ValueError("config_init must be a list of valid initial configurations")
     
 
-    # 调用 bo_tpe 生成初始数据
+
     init_data = bo_tpe(fun_to_evaluate, config_space, 0, n_init, seed, config_init, just_fetch_information=True, reset_info=False)
     
 
     y0 = list(init_data["loss"])
     x0 = []
 
-    # 容差设置，避免浮点数精度问题
+
     tol = 1e-8
 
     for idx in range(n_init):
-        this_x = config_init[idx]  # 获取初始配置
+        this_x = config_init[idx] 
         new_array = []
         for key in order_list:
             param_value = this_x[key]
@@ -393,7 +393,7 @@ def get_init_configs(fun_to_evaluate, config_space, n_init, order_list, seed=0, 
                 
                 raise ValueError(f"Generated point for {key} is out of bounds: {param_value} not in [{lower}, {upper}]")
 
-            # 如果生成的参数满足边界要求，添加到新数组
+
             new_array.append(param_value)
         x0.append(new_array)
 
