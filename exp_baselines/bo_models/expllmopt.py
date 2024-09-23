@@ -130,12 +130,12 @@ class ExpLLMOptimizer:
         print('----------load model------------')
         self.model = bops_model_exp(model_path)
         self.direction = direction
-        # self.history = {
-        #     'records': [],
-        #     'best_score': 0
-        # }
+        self.history = {
+            'records': [],
+            'best_score': 0
+        }
         self.task_config = task_config
-        self.reset_history()
+
 
         self.scores_history = None
         self.params_history = None
@@ -154,12 +154,7 @@ class ExpLLMOptimizer:
         print(f'{sm},{af},{ao}')
         return sm, af, ao
 
-    def reset_history(self):
-        """reset history for reasonable config-init"""
-        self.history = {
-            'records': [],
-            'best_score': 0
-        }
+
     
     def _validate_base_estimator(self, base_estimator):
         valid_estimators = ['GP', 'RF', 'ET', 'GBRT']
@@ -183,25 +178,13 @@ class ExpLLMOptimizer:
     
     
     
-    def create_optimizer(self, params):
-        # print("search_spaces1:",self.search_spaces)
+    def create_optimizer(self, params, order_list):
         
-        # 将 ConfigSpace 的超参数转化为 skopt 维度
-        skopt_dimensions = []
-        for hyperparam in self.search_spaces.get_hyperparameters():
-            if isinstance(hyperparam, CS.UniformIntegerHyperparameter):
-                skopt_dimensions.append(Integer(hyperparam.lower, hyperparam.upper, name=hyperparam.name))
-            elif isinstance(hyperparam, CS.UniformFloatHyperparameter):
-                skopt_dimensions.append(Real(hyperparam.lower, hyperparam.upper, name=hyperparam.name, prior="log-uniform" if hyperparam.log else "uniform"))
-            elif isinstance(hyperparam, CS.CategoricalHyperparameter):
-                skopt_dimensions.append(Categorical(hyperparam.choices, name=hyperparam.name))
-            else:
-                raise ValueError(f"Unsupported hyperparameter type: {type(hyperparam)}")
-        
-        print("skopt_dimensions",skopt_dimensions)
+     
+        space   = obtain_space(self.search_spaces, order_list)
         
         optimizer = Optimizer(
-            dimensions=skopt_dimensions,
+            dimensions=space,
             base_estimator=params[0],
             acq_func=params[1],
             acq_optimizer=params[2]
@@ -209,10 +192,6 @@ class ExpLLMOptimizer:
         return optimizer
 
     
-                
-                
-                
-
 
             
     
@@ -220,9 +199,7 @@ class ExpLLMOptimizer:
         def log_time(start, message):
             end = time.time()
             print(f"{message}: {end - start:.4f} seconds")
-           
-        # reset history before every optimization
-        self.reset_history()
+
         
         err = None
         dup = None
@@ -241,7 +218,7 @@ class ExpLLMOptimizer:
                 log_time(start_time, "Parameter update")
 
                 params = (sm, af, ao)
-                optimizer = self.create_optimizer(params)
+                optimizer = self.create_optimizer(params,order_list)
                 
                 print("params:",params)
                 
@@ -293,14 +270,11 @@ class ExpLLMOptimizer:
                 start_time = time.time()
                 params = optimizer.ask()
                 
-                # check the bounds
-                bounds = [(param.lower, param.upper) for param in self.search_spaces.get_hyperparameters()]
-                params_clipped = clip_to_bounds(params, bounds)
                 
                 
                 log_time(start_time, "Optimizer ask")
 
-                params_dict = {k: v for k, v in zip(self.search_spaces.keys(), params_clipped)}
+                params_dict = {k: v for k, v in zip(self.search_spaces.keys(), params)}
 
                 start_time = time.time()
                 score = self.objective(params_dict)
@@ -312,7 +286,7 @@ class ExpLLMOptimizer:
                 self.history['records'].append({"sm": sm, "af": af, "ao": ao,"params":params_dict, "performance": score})
                 start_time = time.time()
                 
-                optimizer.tell(params_clipped, score)
+                optimizer.tell(params, score)
                 
                 err=None
                 dup=None
@@ -344,20 +318,7 @@ class ExpLLMOptimizer:
     
     
 
-def clip_to_bounds(params, bounds):
-    clipped_params = []
-    for param, (lower, upper) in zip(params, bounds):
-        # 仅在超出边界时进行裁剪，保留原值
-        if param < lower:
-            clipped_param = lower
-            print(f"Parameter {i} ({param}) is below the lower bound ({lower}), clipping to {lower}")
-        elif param > upper:
-            clipped_param = upper
-            print(f"Parameter {i} ({param}) is above the upper bound ({upper}), clipping to {upper}")
-        else:
-            clipped_param = param 
-        clipped_params.append(clipped_param)
-    return clipped_params
+
 
 
 def get_init_configs(fun_to_evaluate, config_space, n_init, order_list, seed=0, config_init=None):
@@ -366,12 +327,12 @@ def get_init_configs(fun_to_evaluate, config_space, n_init, order_list, seed=0, 
         raise ValueError("config_init must be a list of valid initial configurations")
     
 
-
     init_data = bo_tpe(fun_to_evaluate, config_space, 0, n_init, seed, config_init, just_fetch_information=True, reset_info=False)
     
 
     y0 = list(init_data["loss"])
     x0 = []
+    print("x0:",x0,"y0:",y0)
 
 
     tol = 1e-8
@@ -384,15 +345,13 @@ def get_init_configs(fun_to_evaluate, config_space, n_init, order_list, seed=0, 
             lower = config_space[key].lower
             upper = config_space[key].upper
 
-
             print(f"Checking param: {key}, Value: {param_value}, Bounds: [{lower}, {upper}]")
 
 
-            if not (lower - tol <= param_value <= upper + tol):
+            if not (lower <= param_value <= upper):
                 print(f"Parameter {key} = {param_value} is out of bounds [{lower}, {upper}], regenerating...")
                 
                 raise ValueError(f"Generated point for {key} is out of bounds: {param_value} not in [{lower}, {upper}]")
-
 
             new_array.append(param_value)
         x0.append(new_array)
@@ -429,7 +388,5 @@ def expllmopt(fun_to_evaluate, config_space, n_runs, n_init, seed, task_name, mo
     final_y = best_score  # 
     print("best_score:",best_score)
     print("history:",scores_history)
-    # print("fun_to_evaluate:",fun_to_evaluate.all_results)
-    # all_metrics = pd.Series({"generalization_score": pd.Series(np.array(scores_history))})
     print("llm_result:",final_y)
     return final_y, pd.DataFrame(fun_to_evaluate.all_results)
