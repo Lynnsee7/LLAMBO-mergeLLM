@@ -2,6 +2,7 @@ import re
 import time
 import copy
 import torch
+import random
 import numpy as np
 import pandas as pd
 import os
@@ -129,11 +130,12 @@ class ExpLLMOptimizer:
         print('----------load model------------')
         self.model = bops_model_exp(model_path)
         self.direction = direction
-        self.history = {
-            'records': [],
-            'best_score': 0
-        }
+        # self.history = {
+        #     'records': [],
+        #     'best_score': 0
+        # }
         self.task_config = task_config
+        self.reset_history()
 
         self.scores_history = None
         self.params_history = None
@@ -152,6 +154,13 @@ class ExpLLMOptimizer:
         print(f'{sm},{af},{ao}')
         return sm, af, ao
 
+    def reset_history(self):
+        """reset history for reasonable config-init"""
+        self.history = {
+            'records': [],
+            'best_score': 0
+        }
+    
     def _validate_base_estimator(self, base_estimator):
         valid_estimators = ['GP', 'RF', 'ET', 'GBRT']
         if base_estimator not in valid_estimators:
@@ -189,6 +198,7 @@ class ExpLLMOptimizer:
             else:
                 raise ValueError(f"Unsupported hyperparameter type: {type(hyperparam)}")
         
+        print("skopt_dimensions",skopt_dimensions)
         
         optimizer = Optimizer(
             dimensions=skopt_dimensions,
@@ -199,22 +209,10 @@ class ExpLLMOptimizer:
         return optimizer
 
     
-    def save_history(self,save_path='/root/LLAMBO/result_exp'):
-        if self.params_history==None or self.scores_history==None:
-            raise ValueError('the optimizer has no optimization history!')
-        params_array = np.array(self.params_history)
-        scores_array = np.array(self.scores_history)
-        cumulative_min_scores = np.minimum.accumulate(scores_array)
-        points = [(i, score) for i, score in enumerate(cumulative_min_scores)]
+                
+                
+                
 
-        # Write the points to 'skopt.txt'
-        save_file=os.path.join(save_path,f"vicuna_llmopt_{self.task_config['task_name']}_{self.task_config['model_name']}.txt")
-        with open(save_file, 'w') as f:
-            for x, y in points:
-                f.write(f"{x},{y}\n")   
-                
-                
-                
 
             
     
@@ -222,11 +220,14 @@ class ExpLLMOptimizer:
         def log_time(start, message):
             end = time.time()
             print(f"{message}: {end - start:.4f} seconds")
-            
+           
+        # reset history before every optimization
+        self.reset_history()
+        
         err = None
         dup = None
         
-        # 获取初始配置222222222222222222222222222222222222222222222
+        # 获取初始配置===============================================
         x0, y0 = get_init_configs(self.objective, self.search_spaces, n_init, order_list, seed, config_init)
         
 
@@ -242,14 +243,17 @@ class ExpLLMOptimizer:
                 params = (sm, af, ao)
                 optimizer = self.create_optimizer(params)
                 
+                print("params:",params)
                 
-                # 2222222222222222222222222222222222
+                # =======================================================
                 for i in range(len(x0)):
+                    print("11111x0[i]",x0[i],"11111y0[i]",y0[i])
                     optimizer.tell(x0[i], y0[i])
+                    print("22222x0[i]",x0[i],"22222y0[i]",y0[i])
                 
                 break
             except ValueError as e:
-                print(e)
+                print("OMGerror",e)
                 # err = e
                 dup=f"## surrogate model: {sm}; acquisition function: {af}; acquisition optimizer: {ao}; ##"
 
@@ -258,7 +262,7 @@ class ExpLLMOptimizer:
         best_params = None
         best_score = float('inf') if self.direction == "minimize" else -float('inf')
         params_history, scores_history = [], []
-        #22222222222222222222222222222222222222222222
+        # ========================================================================
         # i=0
         i = len(x0)  # 从初始点数量开始递增
         
@@ -288,9 +292,15 @@ class ExpLLMOptimizer:
             try:    
                 start_time = time.time()
                 params = optimizer.ask()
+                
+                # check the bounds
+                bounds = [(param.lower, param.upper) for param in self.search_spaces.get_hyperparameters()]
+                params_clipped = clip_to_bounds(params, bounds)
+                
+                
                 log_time(start_time, "Optimizer ask")
 
-                params_dict = {k: v for k, v in zip(self.search_spaces.keys(), params)}
+                params_dict = {k: v for k, v in zip(self.search_spaces.keys(), params_clipped)}
 
                 start_time = time.time()
                 score = self.objective(params_dict)
@@ -301,7 +311,9 @@ class ExpLLMOptimizer:
 
                 self.history['records'].append({"sm": sm, "af": af, "ao": ao,"params":params_dict, "performance": score})
                 start_time = time.time()
-                optimizer.tell(params, score)
+                
+                optimizer.tell(params_clipped, score)
+                
                 err=None
                 dup=None
                 i+=1
@@ -331,27 +343,61 @@ class ExpLLMOptimizer:
         return best_params, (-best_score if self.direction == "maximize" else best_score), scores_history
     
     
-    
-# 获取初始配置（初始采样点）
+
+def clip_to_bounds(params, bounds):
+    clipped_params = []
+    for param, (lower, upper) in zip(params, bounds):
+        # 仅在超出边界时进行裁剪，保留原值
+        if param < lower:
+            clipped_param = lower
+            print(f"Parameter {i} ({param}) is below the lower bound ({lower}), clipping to {lower}")
+        elif param > upper:
+            clipped_param = upper
+            print(f"Parameter {i} ({param}) is above the upper bound ({upper}), clipping to {upper}")
+        else:
+            clipped_param = param  # 保留原始值
+        clipped_params.append(clipped_param)
+    return clipped_params
+
+
 def get_init_configs(fun_to_evaluate, config_space, n_init, order_list, seed=0, config_init=None):
     # 检查 config_init 是否正确传入
     if config_init is None or not isinstance(config_init, list):
         raise ValueError("config_init must be a list of valid initial configurations")
     
+
+    # 调用 bo_tpe 生成初始数据
     init_data = bo_tpe(fun_to_evaluate, config_space, 0, n_init, seed, config_init, just_fetch_information=True, reset_info=False)
     
+
     y0 = list(init_data["loss"])
     x0 = []
-    
+
+    # 容差设置，避免浮点数精度问题
+    tol = 1e-8
+
     for idx in range(n_init):
         this_x = config_init[idx]  # 获取初始配置
         new_array = []
         for key in order_list:
-            new_array += [this_x[key]]
-        x0.append(new_array)
-    
-    return x0, y0
+            param_value = this_x[key]
+            lower = config_space[key].lower
+            upper = config_space[key].upper
 
+
+            print(f"Checking param: {key}, Value: {param_value}, Bounds: [{lower}, {upper}]")
+
+
+            if not (lower - tol <= param_value <= upper + tol):
+                print(f"Parameter {key} = {param_value} is out of bounds [{lower}, {upper}], regenerating...")
+                
+                raise ValueError(f"Generated point for {key} is out of bounds: {param_value} not in [{lower}, {upper}]")
+
+            # 如果生成的参数满足边界要求，添加到新数组
+            new_array.append(param_value)
+        x0.append(new_array)
+
+    return x0, y0
 
 
 
@@ -368,21 +414,19 @@ def expllmopt(fun_to_evaluate, config_space, n_runs, n_init, seed, task_name, mo
 
 
     
-    # 创建 LLM 优化器实例
     llm_optimizer = ExpLLMOptimizer(
         objective_function=fun_to_evaluate,  
         # objective_function=obj,
         search_spaces=config_space,          
-        task_config={"task": task_name, "model": model_name, "metric": metric_name},  # 根据任务传入的配置
+        task_config={"task": task_name, "model": model_name, "metric": metric_name}, 
         model_path="/root/LLMBOPS-main/model/vicuna-7b-v1.5", 
         direction="minimize"                   
     )
 
-    # 调用优化过程
     best_params, best_score, scores_history = llm_optimizer.optimize(n_trials=n_runs, n_init=n_init, seed=seed, config_init=config_init, order_list=order_list)
 
-    # 返回格式与其他优化器一致
-    final_y = best_score  # 最终结果
+
+    final_y = best_score  # 
     print("best_score:",best_score)
     print("history:",scores_history)
     # print("fun_to_evaluate:",fun_to_evaluate.all_results)
