@@ -377,7 +377,7 @@ def expllmopt(fun_to_evaluate, config_space, n_runs, n_init, seed, task_name, mo
         # objective_function=obj,
         search_spaces=config_space,          
         task_config={"task": task_name, "model": model_name, "metric": metric_name}, 
-        model_path="/root/LLMBOPS-main/model/vicuna-7b-v1.5", 
+        model_path="/root/autodl-tmp/vicuna", 
         direction="minimize"                   
     )
 

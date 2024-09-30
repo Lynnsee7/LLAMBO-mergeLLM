@@ -16,7 +16,7 @@ parzen_estimator==0.5.8
 pyarrow==12.0.1
 scikit_learn==1.0.2
 scikit_optimize==0.9.0
-scipy==1.12.0
+scipy
 smac==1.4.0
 tiktoken==0.6.0
 torch==2.0.1
