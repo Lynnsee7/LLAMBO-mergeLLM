@@ -15,15 +15,15 @@ from skopt import Optimizer
 from sampler import obtain_space
 from skopt.space import Real, Integer, Categorical
 from bo_models.bo_tpe import bo_tpe
-
+from peft import PeftModel
 
 
 class bops_model_exp:
     def __init__(self, model_path, temperature=0.6):
-        # 初始化模型与tokenizer
+
         self.model_path = model_path
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_path, device_map='auto')
+        self.model=AutoModelForCausalLM.from_pretrained('/root/LLMBOPS-main/model/vicuna-7b-v1.5',device_map='auto')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.temperature = temperature
 
@@ -200,64 +200,52 @@ class ExpLLMOptimizer:
             end = time.time()
             print(f"{message}: {end - start:.4f} seconds")
 
-        
         err = None
         dup = None
-        
 
         x0, y0 = get_init_configs(self.objective, self.search_spaces, n_init, order_list, seed, config_init)
-        
 
         while True:
             try:
                 start_time = time.time()
                 print(dup)
-                sm, af, ao = self._param_update(self.task_config, self.history, err,dup=dup)
-                err=None
-                dup=None
+                sm, af, ao = self._param_update(self.task_config, self.history, err, dup=dup)
+                err = None
+                dup = None
                 log_time(start_time, "Parameter update")
 
                 params = (sm, af, ao)
-                optimizer = self.create_optimizer(params,order_list)
-                
-                print("params:",params)
-                
-                # =======================================================
+                optimizer = self.create_optimizer(params, order_list)
+
+                print("params:", params)
+
+                # 初始点插入优化器
                 for i in range(len(x0)):
-                    print("11111x0[i]",x0[i],"11111y0[i]",y0[i])
+                    print("11111x0[i]", x0[i], "11111y0[i]", y0[i])
                     optimizer.tell(x0[i], y0[i])
-                    print("22222x0[i]",x0[i],"22222y0[i]",y0[i])
-                
+                    print("22222x0[i]", x0[i], "22222y0[i]", y0[i])
+
                 break
             except ValueError as e:
-                print("OMGerror",e)
-                # err = e
-                dup=f"## surrogate model: {sm}; acquisition function: {af}; acquisition optimizer: {ao}; ##"
+                print("OMGerror", e)
+                dup = f"## surrogate model: {sm}; acquisition function: {af}; acquisition optimizer: {ao}; ##"
 
-        
-        
         best_params = None
         best_score = float('inf') if self.direction == "minimize" else -float('inf')
         params_history, scores_history = [], []
-        # ========================================================================
-        # i=0
-        i = len(x0)  
-        
+
+        i = len(x0)
+
         err, dup = None, None
+        n_trials += n_init
 
-        n_trials+=n_init
-        while True:
-            
-            if i>=n_trials:
-                break
-            print(f"Trial {i+1}/{n_trials}")
-            
+        while i < n_trials:
+            print(f"Trial {i + 1}/{n_trials}")
             start_time = time.time()
-
 
             sm, af, ao = self._param_update(self.task_config, self.history, err, dup=dup)
             log_time(start_time, "Parameter update (loop)")
-            
+
             optimizer.acq_func = af
             optimizer.cand_acq_funcs_ = [af]
             optimizer.specs['args']['acq_func'] = af
@@ -265,54 +253,76 @@ class ExpLLMOptimizer:
             optimizer.acq_optimizer = ao
             optimizer.specs['args']['acq_optimizer'] = ao
             optimizer.specs['args']['base_estimator'] = sm
-            
-            try:    
+
+            try:
                 start_time = time.time()
                 params = optimizer.ask()
-                
-                
-                
+
+                # 确保顺序一致的映射，基于名称进行映射而非顺序
+                param_names = list(self.search_spaces.keys())
+                param_dict = {name: param for name, param in zip(param_names, params)}
+
+                # 修正生成的参数，确保其在合法范围内
+                for param_name in param_names:
+                    search_space_param = self.search_spaces[param_name]
+                    param = param_dict[param_name]
+
+                    lower = search_space_param.lower
+                    upper = search_space_param.upper
+
+                    # 如果参数值不在合法范围内，进行修正
+                    if param < lower or param > upper:
+                        print(f"参数 {param_name} 不在范围内 ({param}，范围: [{lower}, {upper}])，重新调整...")
+                        if isinstance(search_space_param, CS.hyperparameters.UniformFloatHyperparameter):
+                            param_dict[param_name] = np.random.uniform(lower, upper)
+                        elif isinstance(search_space_param, CS.hyperparameters.UniformIntegerHyperparameter):
+                            param_dict[param_name] = np.random.randint(lower, upper + 1)
+
+
+                params = [param_dict[name] for name in param_names]
+
                 log_time(start_time, "Optimizer ask")
 
-                params_dict = {k: v for k, v in zip(self.search_spaces.keys(), params)}
-
-                start_time = time.time()
-                score = self.objective(params_dict)
+                # 传递修正后的参数给目标函数
+                score = self.objective(param_dict)
                 log_time(start_time, "Objective function evaluation")
 
                 if self.direction == "maximize":
                     score = -score
 
-                self.history['records'].append({"sm": sm, "af": af, "ao": ao,"params":params_dict, "performance": score})
-                start_time = time.time()
-                
+                self.history['records'].append({
+                    "sm": sm,
+                    "af": af,
+                    "ao": ao,
+                    "params": param_dict,
+                    "performance": score
+                })
+
                 optimizer.tell(params, score)
-                
-                err=None
-                dup=None
-                i+=1
+
+                err = None
+                dup = None
+                i += 1
             except Exception as e:
-                err=e
+                err = e
                 print(e)
-                dup=f"## surrogate model: {sm}; acquisition function: {af}; acquisition optimizer: {ao}; ##"
+                dup = f"## surrogate model: {sm}; acquisition function: {af}; acquisition optimizer: {ao}; ##"
                 continue
-            
+
             log_time(start_time, "Optimizer tell")
-            
-            # Record history
+
             params_history.append(params)
             scores_history.append(score)
 
             if (self.direction == "minimize" and score < best_score) or \
-            (self.direction == "maximize" and score > best_score):
+               (self.direction == "maximize" and score > best_score):
                 best_score = score
                 self.history['best_score'] = score
-                best_params = params_dict
-                
-            # save history
-            self.params_history=params_history
-            self.scores_history=scores_history
+                best_params = param_dict
 
+ 
+            self.params_history = params_history
+            self.scores_history = scores_history
 
         return best_params, (-best_score if self.direction == "maximize" else best_score), scores_history
     
@@ -377,9 +387,10 @@ def expllmopt(fun_to_evaluate, config_space, n_runs, n_init, seed, task_name, mo
         # objective_function=obj,
         search_spaces=config_space,          
         task_config={"task": task_name, "model": model_name, "metric": metric_name}, 
-        model_path="/root/autodl-tmp/vicuna", 
+        model_path="/root/LLMBOPS-main/model/vicuna-7b-v1.5", 
         direction="minimize"                   
     )
+    print("task:", task_name, "model:", model_name, "metric:", metric_name)
 
     best_params, best_score, scores_history = llm_optimizer.optimize(n_trials=n_runs, n_init=n_init, seed=seed, config_init=config_init, order_list=order_list)
 
