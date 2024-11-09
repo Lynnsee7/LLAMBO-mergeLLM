@@ -48,23 +48,71 @@ class bops_model_optuna:
         self.init_prompt_template=self.followup_prompt_template="""\n            Task description: This is the configuration of a machine learning task.<dataset_desc>\n\n            Model name: <model_name>\n            Model description:<model_desc>\n            Here is a set of hyperparameters for the machine learning model on this task, each has a different performance:<hyperparams>Which of the following hyperparameter combinations is the best choice? Please analyze the task, dataset and model, and give a detailed explanation first, then output your final decision in one single line.\n"""
 
     def generate_response(self,prompt, max_new_tokens=2048):
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(inputs.input_ids, max_new_tokens=max_new_tokens,temperature=self.temperature,do_sample=True)
-        new_tokens = outputs[0][inputs.input_ids.shape[1]:]
-        print('token count: ',len(new_tokens))
-        response = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
-        return response
+    #     inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+    #     outputs = self.model.generate(inputs.input_ids, max_new_tokens=max_new_tokens,temperature=self.temperature,do_sample=True)
+    #     new_tokens = outputs[0][inputs.input_ids.shape[1]:]
+    #     print('token count: ',len(new_tokens))
+    #     response = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
+    #     return response
+        os.environ["OPENAI_API_KEY"] = "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"
+        os.environ["OPENAI_API_VERSION"] = "2020-10-01"
+        os.environ["OPENAI_API_BASE"] = "https://api.openai.com/v1"
+        os.environ["OPENAI_API_TYPE"] = "open_ai"
+        try:
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            with torch.no_grad():  # 避免保存计算图
+                outputs = self.model.generate(
+                    inputs.input_ids, 
+                    max_new_tokens=max_new_tokens,
+                    temperature=self.temperature,
+                    do_sample=True
+                )
+
+            # 立即将输出转移到CPU并释放GPU变量
+            new_tokens = outputs[0][inputs.input_ids.shape[1]:].cpu()
+            response = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
+
+            # 显式删除中间变量
+            del inputs
+            del outputs
+            del new_tokens
+            return response
+        
+        finally:
+            # 确保清理中间变量
+            import gc
+            gc.collect()
+            torch.cuda.empty_cache()
     
-    def _parse_hyperparams(self,hyperparams_map):
+    # def _parse_hyperparams(self,hyperparams_map):
+    #     hyperparams_str = ""
+    #     alphabet = string.ascii_uppercase
+    #     for i, hyperparam in enumerate(hyperparams_map.keys()):
+    #         hyperparams_str += f"{alphabet[i]}. {hyperparam}\n"
+    #     return hyperparams_str
+
+    def _parse_hyperparams(self, hyperparams_map):
         hyperparams_str = ""
         alphabet = string.ascii_uppercase
-        for i, hyperparam in enumerate(hyperparams_map.keys()):
-            hyperparams_str += f"{alphabet[i]}. {hyperparam}\n"
-        return hyperparams_str
 
+        print("Debug - hyperparams_map keys:", list(hyperparams_map.keys()))
+
+        for i, hyperparam_str in enumerate(hyperparams_map.keys()):
+            try:
+                params = json.loads(hyperparam_str)  # 解析存储的JSON字符串
+                params_str = "\n".join([f"  {k}: {v}" for k, v in params.items()])
+                hyperparams_str += f"{alphabet[i]}.\n{params_str}\n\n"
+                # print(f"Formatted option {alphabet[i]}:", params_str)
+            except json.JSONDecodeError:
+                print(f"Failed to parse JSON: {hyperparam_str}")
+                continue
+
+        return hyperparams_str
+    
+    
     def _call_model(self,task_config,hyperparams_map,last_score,e=None,dup=None):
         hyperparams=self._parse_hyperparams(hyperparams_map)
-        print(hyperparams)
+        print("hyperparams:",hyperparams)
         if self.conv.messages==[]:#init
             # print(task_config)
             init_prompt=copy.copy(self.init_prompt_template).replace('<task_type>',task_config['task_type'])\
@@ -87,7 +135,6 @@ class bops_model_optuna:
         self.conv.append_message(self.conv.roles[1],None)
 
         prompt=self.conv.get_prompt()
-        # print('prompt',prompt)
         original_response = self.generate_response(prompt)
         return original_response
             
@@ -179,7 +226,7 @@ class OptunaMTLLMOptimizer:
                  task_config_simple,
                 #  model_path='/home/lang.gao/proj/models/vicuna-13b',
                 # model_path='/mnt/data/users/Lang_Gao/proj/models/vicuna-7b-v1.5-ftmlp-10000sample',
-                model_path='/mnt/data/users/Lang_Gao/proj/models/vicuna-7b-v1.5-ftmlp',
+                model_path='/root/autodl-tmp/LLMBOPS_before/model/HeartyHaven/vicuna-7b-v1.5-ftmlp',
                  prompt_type=None,
                  direction="minimize"
                  ):
@@ -342,6 +389,9 @@ class OptunaMTLLMOptimizer:
             except Exception as e:
                 print('optimization failed with:',e)
                 continue
+
+
+
             
     def optimize(self, n_trials=100, mode='test'):
         """
@@ -384,7 +434,7 @@ class OptunaMTLLMOptimizer:
                
 
             # for actual use
-            print(map_hyperparams_params)
+            print("map_hyperparams_params:",map_hyperparams_params)
             selected_hyperparams=self.model(task_config=self.task_config,hyperparams_map=map_hyperparams_params,last_score=last_score)
             # for test
             # selected_hyperparams=next(iter(map_hyperparams_params.keys()))
@@ -414,7 +464,87 @@ class OptunaMTLLMOptimizer:
     
 
 
+# def expllmopt(fun_to_evaluate, config_space, n_runs, n_init, seed, task_name, model_name, metric_name, config_init=None, order_list=None):
+#     if hasattr(fun_to_evaluate, "reseed"):
+#         fun_to_evaluate.reseed(seed)
+#     fun_to_evaluate.reset_results()
+    
+#     # 获取参数引用
+#     params_ref = {}
+#     for param_name in config_space.get_hyperparameter_names():
+#         hp = config_space.get_hyperparameter(param_name)
+#         param_type = float if isinstance(hp, UniformFloatHyperparameter) else int
+#         params_ref[param_name] = {
+#             "type": param_type,
+#             "range": [hp.lower, hp.upper],
+#             "name": param_name
+#         }
+
+#     class WrappedObjective:
+#         def __init__(self, fun_to_evaluate):
+#             self.fun_to_evaluate = fun_to_evaluate
+            
+#         def __call__(self, trial):
+#             params = {}
+#             try:
+#                 # 从trial.params获取参数
+#                 params = trial.params
+#             except AttributeError:
+#                 # 如果trial是字典，直接用
+#                 params = trial
+
+#             return self.fun_to_evaluate(params)
+
+        
+#     dataset_type = 'classification' # 或者根据实际情况设置
+#     dataset_name = task_name
+    
+#     task_config = {
+#         "task_type": f"{dataset_type} task on {dataset_name} dataset.",
+#         "dataset_name": dataset_name,
+#         "dataset_desc": form_description(descriptions, dtype="datasets", 
+#                                      name=dataset_name.lower(), 
+#                                      extra_features=["statistical_characteristics", 
+#                                                    "feature_meaning", "label"]),
+#         "model_name": model_name,
+#         "model_desc": form_description(descriptions, dtype="models", 
+#                                    name=model_name.lower()),
+#         "metric": 'accuracy' if dataset_type == 'classification' else 'output value'
+#     }
+#     # print("=======task_config:", task_config)
+    
+#     task_config_simple = {
+#         'task': task_name,
+#         'model': model_name
+#     }
+
+#     # 创建优化器，使用包装后的目标函数
+#     optimizer = OptunaMTLLMOptimizer(
+#         objective_function=WrappedObjective(fun_to_evaluate),  # 使用包装类
+#         task_config=task_config,
+#         task_config_simple=task_config_simple,
+#         # model_path="/root/LLMBOPS-main/model/vicuna-7b-v1.5",
+#         model_path="/root/autodl-tmp/LLMBOPS_before/model/HeartyHaven/vicuna-7b-v1.5-ftmlp",
+#         # model_path="/root/autodl-tmp/LLMBOPS_before/model/HeartyHaven/vicuna-7b-v1.5-ftmlp-2000sample-singleround",
+#         direction="minimize"
+#     )
+#     # 打印函数信息而不是尝试获取源码
+#     print("Function information:")
+#     print(f"- Type: {type(fun_to_evaluate)}")
+#     print(f"- Callable: {callable(fun_to_evaluate)}")
+#     print(f"- Methods: {[m for m in dir(fun_to_evaluate) if not m.startswith('_')]}")
+  
+
+#     try:
+#         best_hyperparams, best_score, history = optimizer.optimize(n_runs)
+#         return best_score, pd.DataFrame(fun_to_evaluate.all_results)
+#     except Exception as e:
+#         print(f"Optimization failed: {str(e)}")
+#         return None, None
+
+
 def expllmopt(fun_to_evaluate, config_space, n_runs, n_init, seed, task_name, model_name, metric_name, config_init=None, order_list=None):
+    # 已有部分
     if hasattr(fun_to_evaluate, "reseed"):
         fun_to_evaluate.reseed(seed)
     fun_to_evaluate.reset_results()
@@ -429,25 +559,36 @@ def expllmopt(fun_to_evaluate, config_space, n_runs, n_init, seed, task_name, mo
             "range": [hp.lower, hp.upper],
             "name": param_name
         }
-
+        
+    # 关键是这个 WrappedObjective 类需要正确处理参数
     class WrappedObjective:
         def __init__(self, fun_to_evaluate):
             self.fun_to_evaluate = fun_to_evaluate
-            
-        def __call__(self, trial):
-            params = {}
-            try:
-                # 从trial.params获取参数
-                params = trial.params
-            except AttributeError:
-                # 如果trial是字典，直接使用
-                params = trial
-                
-            # 调用原始的目标函数
-            return self.fun_to_evaluate(params)
+            self.api_config = params_ref
 
-    # 创建任务配置
-    dataset_type = 'classification' # 或者根据实际情况设置
+        def __call__(self, trial):
+            # 确保每个参数都被正确设置
+            params = {}
+            for param_name, param_config in self.api_config.items():
+                if param_config['type'] == float:
+                    params[param_name] = trial.suggest_float(
+                        param_name,
+                        param_config['range'][0],
+                        param_config['range'][1]
+                    )
+                elif param_config['type'] == int:
+                    params[param_name] = trial.suggest_int(
+                        param_name,
+                        param_config['range'][0],
+                        param_config['range'][1]
+                    )
+
+            # 记录和返回结果
+            result = self.fun_to_evaluate(params)
+            print(f"Evaluated parameters: {params} with result: {result}")
+            return result
+
+    dataset_type = 'classification' 
     dataset_name = task_name
     
     task_config = {
@@ -473,7 +614,7 @@ def expllmopt(fun_to_evaluate, config_space, n_runs, n_init, seed, task_name, mo
         objective_function=WrappedObjective(fun_to_evaluate),  # 使用包装类
         task_config=task_config,
         task_config_simple=task_config_simple,
-        model_path="/root/LLMBOPS-main/model/vicuna-7b-v1.5",
+        model_path="/root/autodl-tmp/LLMBOPS_before/model/HeartyHaven/vicuna-7b-v1.5-ftmlp",
         direction="minimize"
     )
 
